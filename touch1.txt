@@ -1,0 +1,32 @@
+pipeline {
+    agent any
+    tools{
+        maven 'maven3'
+    }
+    stages{
+        stage('Build Maven'){
+            steps{
+                checkout changelog: false, poll: false, scm: scmGit(branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/Java-Techie-jt/devops-automation']])
+                sh 'mvn clean install'
+            }
+        }
+        stage('Build docker image'){
+            steps{
+                echo "Image build started" 
+                sh 'docker build -t amanjain4/devops-integration .'
+                echo "Image build completed"
+            }
+        }
+        stage('Push image to Hub'){
+            steps{
+                script{
+                    withCredentials([string(credentialsId: '300cc936-9245-474c-bb82-bff0daf6eab5', variable: 'dockerhubpwd')]) {
+                        sh 'docker login -u amanjain4 -p ${dockerhubpwd}'
+                        echo 'Login Done..'
+                        sh 'docker push amanjain4/devops-integration'
+}
+                   
+                }
+            }
+        }
+   
